@@ -1,0 +1,74 @@
+﻿<script src="~/Scripts/angular.js"></script>
+
+<script>
+    var app = angular.module("BrowsingApp", []);
+
+    app.controller("FileController", function ($scope, $http) {
+        getDir(-1);
+        $scope.getParentDir = function () {
+            return getDir(-2);
+        };
+        $scope.getSubDir = getDir;
+
+        function getAll() {
+            return $http.get("/api/file")
+                .then(function (response) {
+                    $scope.manager = response.data;
+                });
+        };
+
+        function getDir(num) {
+            return $http.get("/api/file/" + num)
+                .then(function (response) {
+                    $scope.manager = response.data;
+                    getAll();
+                })
+                .catch(function (err) {
+                    alert("An error occured on server. No access to the directory.");
+                });
+        };
+    });
+</script>
+
+<header>
+    <div class="content-wrapper">
+        <div class="float-left">
+            <p class="site-title">File Browsing Web Application</p>
+        </div>
+    </div>
+</header>
+<div id="body" ng-app="BrowsingApp" ng-controller="FileController">
+    <section class="featured">
+        <div class="content-wrapper">
+            <hgroup class="title">
+                <h1>Current directory:</h1>
+                <h2>{{manager.DirectoryName}}</h2>
+            </hgroup>
+            <div ng-hide="manager.DiskRoot">
+                <p ng-show="manager.SizeLimits">File counts by size:</p>
+                <table ng-show="manager.SizeLimits">
+                    <tr><th ng-repeat="limit in manager.SizeLimits">{{limit}}</th></tr>
+                    <tr>
+                        <td>{{manager.TinyFileCount}}</td><td>{{manager.SmallFileCount}}</td>
+                        <td>{{manager.BigFileCount}}</td><td>{{manager.HugeFileCount}}</td>
+                    </tr>
+                </table>
+                <p ng-show="manager.DirCount">{{manager.DirCount}}</p>
+            </div>
+        </div>
+    </section>
+    <section class="content-wrapper main-content clear-fix">
+        <h3 ng-hide="manager.DiskRoot">Subdirectories and files:</h3>
+        <h3 ng-show="manager.DiskRoot">Disks:</h3>
+        <ul class="item">
+            <li class="parent" ng-hide="manager.DiskRoot">
+                <a href ng-click="getParentDir()">...</a>
+            </li>
+            <li class="directory" ng-repeat="subdir in manager.Subdirectories">
+                <a href ng-click="getSubDir($index)">{{subdir}}</a>
+            </li>
+            <li class="file" ng-repeat="file in manager.Files">{{file}}</li>
+        </ul>
+    </section>
+</div>
+
